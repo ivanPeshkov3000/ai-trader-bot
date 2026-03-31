@@ -1,0 +1,20 @@
+{
+  "name": "ai-trader-bot",
+  "version": "0.1.0",
+  "description": "Scalable Node.js scaffold for Russian stock market trading bot with AI-agent integration",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "check": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pino": "^9.4.0",
+    "pino-pretty": "^13.1.1"
+  }
+}
