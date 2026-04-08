@@ -6,6 +6,10 @@ import { MockMarketDataFeed } from './adapters/market/mock-market-data-feed.js';
 import { PaperBrokerGateway } from './adapters/broker/paper-broker-gateway.js';
 import { RuleAssistedAgent } from './ai/agents/rule-assisted-agent.js';
 import { SignalEngine } from './strategy/signal-engine.js';
+import { SmaCrossoverStrategy } from './strategy/strategies/sma-crossover.js';
+import { RsiReversalStrategy } from './strategy/strategies/rsi-reversal.js';
+import { MacdTrendStrategy } from './strategy/strategies/macd-trend.js';
+import { CompositeStrategy } from './strategy/strategies/composite-strategy.js';
 import { RiskManager } from './risk/risk-manager.js';
 import { PortfolioService } from './portfolio/portfolio-service.js';
 import { OrderExecutor } from './execution/order-executor.js';
@@ -17,7 +21,21 @@ async function main() {
   const brokerGateway = new PaperBrokerGateway();
   const aiAgent = new RuleAssistedAgent();
 
-  const signalEngine = new SignalEngine(aiAgent);
+  const { strategy: cfg } = env;
+
+  const compositeStrategy = new CompositeStrategy(
+    [
+      { strategy: new SmaCrossoverStrategy({ fastPeriod: cfg.smaFastPeriod, slowPeriod: cfg.smaSlowPeriod }), weight: 1 },
+      { strategy: new RsiReversalStrategy({ period: cfg.rsiPeriod, overboughtLevel: cfg.rsiOverbought, oversoldLevel: cfg.rsiOversold }), weight: 1 },
+      { strategy: new MacdTrendStrategy({ fastPeriod: cfg.macdFast, slowPeriod: cfg.macdSlow, signalPeriod: cfg.macdSignal }), weight: 1 },
+    ],
+    { minScoreThreshold: cfg.minScoreThreshold },
+  );
+
+  const signalEngine = new SignalEngine(aiAgent, {
+    strategy: compositeStrategy,
+    priceHistoryLength: cfg.priceHistoryLength,
+  });
   const riskManager = new RiskManager({
     maxPositionSizeRub: env.maxPositionSizeRub,
     maxDailyLossRub: env.maxDailyLossRub,
